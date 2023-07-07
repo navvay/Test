@@ -12,9 +12,9 @@ for DEPENDENCY in $DEPENDENCIES; do
     DEP_VERSION=$(echo $DEPENDENCY | cut -d: -f2)
 
     # Retrieve the latest version from Swift Package Index API
-    LATEST_VERSION=$(curl -s "https://api.swiftpackageindex.com/packages/$DEP_NAME" | jq -r '.versions | keys_unsorted | .[-1]')
+    LATEST_VERSION=$(curl -s "https://api.swiftpackageindex.com/packages/$DEP_NAME" | jq -r '.package.most_recent_version.version')
 
-    if [ -n "$LATEST_VERSION" ] && [ "$LATEST_VERSION" != "$DEP_VERSION" ]; then
+    if [ "$LATEST_VERSION" != "null" ] && [ "$LATEST_VERSION" != "$DEP_VERSION" ]; then
         OUTDATED_VERSIONS+="\n$DEP_NAME: $DEP_VERSION -> $LATEST_VERSION"
     fi
 done
