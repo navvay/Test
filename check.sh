@@ -2,11 +2,10 @@
 
 # Read the Package.swift file
 while read -r line; do
-  # Check if the line contains the dependency URL
-  if [[ $line == *".package(url:"* ]]; then
-    # Extract the URL and version range
-    url=$(echo "$line" | grep -o '".*"' | sed 's/"//g')
-    version_range=$(echo "$line" | grep -o 'from:.*' | awk '{print $2}')
+  # Check if the line contains the dependency URL and version range
+  if [[ $line =~ \.package\(url:[[:space:]]*\"(.*\.git)\",[[:space:]]*from:[[:space:]]*\"(.*)\"\) ]]; then
+    url="${BASH_REMATCH[1]}"
+    version_range="${BASH_REMATCH[2]}"
 
     # Extract the package name from the URL
     package_name=$(basename "$url" .git)
