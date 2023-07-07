@@ -11,11 +11,15 @@ for DEPENDENCY in $DEPENDENCIES; do
     DEP_NAME=$(echo $DEPENDENCY | cut -d: -f1)
     DEP_VERSION=$(echo $DEPENDENCY | cut -d: -f2)
 
-    # Retrieve the latest version from the Swift Package Index API
-    LATEST_VERSION=$(curl -s "https://api.swiftpackageindex.com/package/$DEP_NAME" | jq -r '.versions[0].version')
+    # Extract the repository owner and name from the dependency URL
+    REPO_OWNER=$(echo $DEP_NAME | cut -d/ -f4)
+    REPO_NAME=$(echo $DEP_NAME | cut -d/ -f5)
 
-    if [ "$LATEST_VERSION" != "null" ] && [ "$LATEST_VERSION" != "$DEP_VERSION" ]; then
-        OUTDATED_VERSIONS+="\n$DEP_NAME: $DEP_VERSION -> $LATEST_VERSION"
+    # Retrieve the latest tags from the GitHub API
+    LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
+
+    if [ "$LATEST_TAG" != "null" ] && [ "$LATEST_TAG" != "$DEP_VERSION" ]; then
+        OUTDATED_VERSIONS+="\n$DEP_NAME: $DEP_VERSION -> $LATEST_TAG"
     fi
 done
 
