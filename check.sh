@@ -2,7 +2,7 @@
 
 # Parse Package.swift
 PACKAGE_FILE="Package.swift"
-DEPENDENCIES=$(awk '/dependencies:/,/^}/{if ($0~/^}/{next}; sub(/^"/,""){gsub(/".*$/,"");print}}' $PACKAGE_FILE)
+DEPENDENCIES=$(awk '/dependencies:/,/\]/ { if ($0 ~ /url:/) { getline; gsub("\"", ""); print $2 ":" $4 } }' $PACKAGE_FILE)
 
 # Check for the latest version of each dependency
 OUTDATED_VERSIONS=""
