@@ -16,9 +16,9 @@ for DEPENDENCY in $DEPENDENCIES; do
     REPO_NAME=$(echo $DEP_NAME | cut -d/ -f5)
 
     # Retrieve the latest version tag from the GitHub API
-    LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
+    LATEST_TAG=$(curl -s "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0] | .name')
 
-    if [ "$LATEST_TAG" != "null" ] && [ "$LATEST_TAG" != "$DEP_VERSION" ]; then
+    if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "null" ] && [ "$LATEST_TAG" != "$DEP_VERSION" ]; then
         OUTDATED_VERSIONS+="\n$DEP_NAME: $DEP_VERSION -> $LATEST_TAG"
     fi
 done
