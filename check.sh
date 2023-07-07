@@ -2,7 +2,7 @@
 
 # Parse Package.swift
 PACKAGE_FILE="Package.swift"
-DEPENDENCIES=$(awk '/dependencies:/,/^}/{if ($0~/^}/{next}; sub(/^"/,""){gsub(/".*$/,"");print}}' $PACKAGE_FILE)
+DEPENDENCIES=$(sed -n '/dependencies:/,/]/p' $PACKAGE_FILE | awk -F'"' '/url:/{print $2 ":" $4}')
 
 # Check for the latest version of each dependency
 MISSING_VERSIONS="missing_versions.txt"
