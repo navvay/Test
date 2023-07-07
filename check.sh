@@ -11,8 +11,8 @@ for DEPENDENCY in $DEPENDENCIES; do
     DEP_NAME=$(echo $DEPENDENCY | cut -d: -f1)
     DEP_VERSION=$(echo $DEPENDENCY | cut -d: -f2)
 
-    # Retrieve the latest version from GitHub API
-    LATEST_VERSION=$(curl -s "https://api.github.com/repos/$DEP_NAME/releases/latest" | jq -r '.tag_name')
+    # Retrieve the latest version from the Swift Package Index API
+    LATEST_VERSION=$(curl -s "https://api.swiftpackageindex.com/package/$DEP_NAME" | jq -r '.versions[0].version')
 
     if [ "$LATEST_VERSION" != "null" ] && [ "$LATEST_VERSION" != "$DEP_VERSION" ]; then
         OUTDATED_VERSIONS+="\n$DEP_NAME: $DEP_VERSION -> $LATEST_VERSION"
