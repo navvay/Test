@@ -14,8 +14,8 @@ let package = Package(
         .library(name: "MyLibrary", targets: ["MyLibrary"])
     ],
     dependencies: [
-        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "4.9.1"),
-        .package(url: "https://github.com/SDWebImage/SDWebImage.git", from: "4.4.5"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "4.9.0"),
+        .package(url: "https://github.com/SDWebImage/SDWebImage.git", from: "4.4.3"),
         .package(url: "https://github.com/ReactiveX/RxSwift.git", from: "5.0.0")
     ],
     targets: [
