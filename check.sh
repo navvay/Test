@@ -13,8 +13,8 @@ for DEPENDENCY in $DEPENDENCIES; do
     DEP_NAME=$(echo $DEPENDENCY | cut -d: -f1)
     DEP_VERSION=$(echo $DEPENDENCY | cut -d: -f2)
 
-    # Retrieve the latest version using the package manager of your choice (e.g., Swift Package Manager, GitHub API, etc.)
-    LATEST_VERSION=$(YOUR_COMMAND_TO_GET_LATEST_VERSION $DEP_NAME)
+    # Retrieve the latest version from Swift Package Index API
+    LATEST_VERSION=$(curl -s "https://api.swiftpackageindex.com/package/$DEP_NAME" | jq -r '.versions | keys | .[-1]')
 
     if [ "$LATEST_VERSION" != "$DEP_VERSION" ]; then
         echo "$DEP_NAME: $LATEST_VERSION" >> $MISSING_VERSIONS
