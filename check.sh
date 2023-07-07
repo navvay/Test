@@ -2,7 +2,7 @@
 
 # Parse Package.swift
 PACKAGE_FILE="Package.swift"
-DEPENDENCIES=$(sed -n '/dependencies:/,/]/p' $PACKAGE_FILE | awk -F'"' '/url:/{print $2 ":" $4}')
+DEPENDENCIES=$(awk '/dependencies:/,/^}/{if ($0~/^}/{next}; sub(/^"/,""){gsub(/".*$/,"");print}}' $PACKAGE_FILE)
 
 # Check for the latest version of each dependency
 OUTDATED_VERSIONS=""
@@ -11,7 +11,7 @@ for DEPENDENCY in $DEPENDENCIES; do
     DEP_NAME=$(echo $DEPENDENCY | cut -d: -f1)
     DEP_VERSION=$(echo $DEPENDENCY | cut -d: -f2)
 
-    # Extract the repository owner and name from the GitHub URL
+    # Extract the repository owner and name from the dependency URL
     REPO_OWNER=$(echo $DEP_NAME | cut -d/ -f4)
     REPO_NAME=$(echo $DEP_NAME | cut -d/ -f5)
 
