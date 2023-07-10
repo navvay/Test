@@ -1,0 +1,22 @@
+name: Dependency Check
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  dependency_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up GHC
+        uses: haskell/actions/setup@v1
+
+      - name: Build and Test
+        run: |
+          chmod +x dependency_check.sh
+          ./dependency_check.sh MyPackage.cabal
