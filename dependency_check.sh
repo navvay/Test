@@ -19,8 +19,7 @@ import           Distribution.Types.VersionRange
 import           Distribution.Version
 import           Distribution.Text
 import           Data.List (nub)
-import           Network.HTTP.Client (newManager, defaultManagerSettings, parseRequest, httpLbs, responseBody)
-import           Control.Monad (forM)
+import           System.Process
 
 -- | Extracts dependencies from the given .cabal file
 extractDependencies :: FilePath -> IO [Dependency]
@@ -47,11 +46,8 @@ getLatestVersion packageName = do
   let url = "https://hackage.haskell.org/package/" ++ packageNameStr ++ "/preferred"
       packageNameStr = unPackageName packageName
 
-  manager <- newManager defaultManagerSettings
-  request <- parseRequest url
-  response <- httpLbs request manager
-  let versionStr = B.unpack $ responseBody response
-
+  versionStr <- readProcess "curl" [url] []
+  
   case simpleParse versionStr of
     Just version -> return $ Just version
     Nothing -> return Nothing
@@ -62,7 +58,7 @@ main = do
   cabalFile <- head <$> getArgs
 
   dependencies <- extractDependencies cabalFile
-  latestVersions <- forM dependencies getLatestVersion
+  latestVersions <- mapM getLatestVersion dependencies
 
   let outdatedDeps = [pkgName | (pkgName, Just latestVer) <- zip dependencies latestVersions, latestVer > packageVersion pkgName]
   
