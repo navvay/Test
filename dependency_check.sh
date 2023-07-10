@@ -13,29 +13,22 @@ HASKELL_SCRIPT=$(cat <<'EOT'
 import           Control.Monad (forM)
 import qualified Data.ByteString.Char8 as B
 import           Data.List (nub)
-import           Distribution.PackageDescription.Parsec
-import           Distribution.PackageDescription.Configuration
-import           Distribution.PackageDescription.Parse (parseGenericPackageDescription)
-import           Distribution.PackageDescription
-import           Distribution.PackageDescription.PrettyPrint (showGenericPackageDescription)
 import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
 import           Distribution.Version
 import           System.Environment
 import           System.Process
 
--- | Extracts dependencies from the given .cabal file using cabal tool
+-- | Extracts dependencies from the given .cabal file using cabal-plan tool
 extractDependencies :: FilePath -> IO [Dependency]
 extractDependencies cabalFile = do
-  output <- readProcess "cabal" ["v2-build", "--dry-run", "--dependencies", "--enable-tests", "--enable-benchmarks"] cabalFile
-  let dependencies = extractPackageName . words $ output
+  output <- readProcess "cabal-plan" ["list-dependencies"] cabalFile
+  let dependencies = extractPackageName . lines $ output
   return $ nub dependencies
 
 -- | Extracts the package names from the output
 extractPackageName :: [String] -> [Dependency]
-extractPackageName [] = []
-extractPackageName (_:"dependent":pkg:rest) = Dependency (mkPackageName pkg) anyVersion : extractPackageName rest
-extractPackageName (_:xs) = extractPackageName xs
+extractPackageName = map (\pkg -> Dependency (mkPackageName pkg) anyVersion)
 
 -- | Retrieves the latest version of a package from Hackage
 getLatestVersion :: PackageName -> IO (Maybe Version)
