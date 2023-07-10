@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Cabal
+        uses: haskell/actions/setup-cabal@v1
+
       - name: Checkout Repository
         uses: actions/checkout@v2
 
