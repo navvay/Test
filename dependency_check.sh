@@ -13,6 +13,8 @@ HASKELL_SCRIPT=$(cat <<'EOT'
 import qualified Data.ByteString.Char8 as B
 import           Distribution.PackageDescription.Parsec
 import           Distribution.PackageDescription.Configuration
+import           Distribution.PackageDescription.Parsec.ParseResult (runParseResult)
+import           Distribution.PackageDescription.Parse (parseGenericPackageDescription)
 import           Distribution.PackageDescription
 import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
@@ -26,11 +28,12 @@ extractDependencies :: FilePath -> IO [Dependency]
 extractDependencies cabalFile = do
   contents <- B.readFile cabalFile
 
-  case parseGenericPackageDescriptionMaybe contents of
-    ParseFailed err -> do
+  let gpdResult = runParseResult $ parseGenericPackageDescription contents
+  case gpdResult of
+    (_, Left err) -> do
       putStrLn $ "Failed to parse " ++ cabalFile ++ ": " ++ show err
       exitFailure
-    ParseOk _ gpd -> do
+    (_, Right gpd) -> do
       let flags = []
           mlib = condLibrary gpd
           exes = condExecutables gpd
