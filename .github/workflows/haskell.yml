@@ -13,10 +13,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Install Cabal and GHC
-        run: |
-          curl -sSL https://get.haskellstack.org/ | sh
-          stack setup
+      - name: Set up GHC
+        run: stack setup
 
       - name: Run Dependency Check
         id: dependency_check
