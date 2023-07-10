@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if the input .cabal file is provided
-if [ -z "$1" ]; then 
+if [ -z "$1" ]; then
   echo "Usage: ./dependency_check.sh <CABAL_FILE>"
   exit 1
 fi
@@ -18,13 +18,10 @@ import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
 import           Distribution.Version
 import           Distribution.Text
-import           Hackage.Security.Client
-import           Hackage.Security.Client.Repository.Cache
-import           Hackage.Security.Util.Path
-import           System.Environment
-import           System.Directory
-import           System.Exit
-import           System.FilePath
+import           Data.List (nub)
+import           Network.HTTP.Simple (httpRequestBS, getResponseBody, setRequestQueryString, parseRequest)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad (forM)
 
 -- | Extracts dependencies from the given .cabal file
 extractDependencies :: FilePath -> IO [Dependency]
@@ -48,16 +45,17 @@ extractDependencies cabalFile = do
 -- | Retrieves the latest version of a package from Hackage
 getLatestVersion :: PackageName -> IO (Maybe Version)
 getLatestVersion packageName = do
-  let repoPath = defaultHackageRepoPath
-      repoContext = RepoContext
-        { repoContextLayout = topLevelLayout (Filesystem repoPath)
-        , repoContextHttpLib = undefined -- or use http-client
-        }
+  let url = "https://hackage.haskell.org/package/" ++ packageNameStr ++ "/preferred"
+      packageNameStr = unPackageName packageName
 
-  repoIndex <- cachedIndex repoContext
+  request <- parseRequest url
+  response <- httpRequestBS $ setRequestQueryString [] request
+  let responseBody = getResponseBody response
+      versionStr = B.unpack responseBody
 
-  let pkgIndex = packageIndex repoIndex
-  return $ lookupLatestVersion packageName pkgIndex
+  case simpleParse versionStr of
+    Just version -> return $ Just version
+    Nothing -> return Nothing
 
 -- | Main function
 main :: IO ()
@@ -65,7 +63,7 @@ main = do
   cabalFile <- head <$> getArgs
 
   dependencies <- extractDependencies cabalFile
-  latestVersions <- mapM getLatestVersion dependencies
+  latestVersions <- forM dependencies getLatestVersion
 
   let outdatedDeps = [pkgName | (pkgName, Just latestVer) <- zip dependencies latestVersions, latestVer > packageVersion pkgName]
   
