@@ -10,16 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Cabal
-        uses: haskell/actions/setup-cabal@v1
-
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Set up GHC
-        uses: haskell/actions/setup@v1
+      - name: Set up Cabal
+        uses: haskell/actions/setup-cabal@v1
 
-      - name: Build and Test
+      - name: Run Dependency Check
+        id: dependency_check
         run: |
           chmod +x dependency_check.sh
-          ./dependency_check.sh MyPackage.cabal
+          output=$(./dependency_check.sh MyPackage.cabal)
+          echo "::set-output name=dependency_report::$output"
