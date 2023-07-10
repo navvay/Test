@@ -15,11 +15,13 @@ import qualified Data.ByteString.Char8 as B
 import           Data.List (nub)
 import           Distribution.PackageDescription.Parsec
 import           Distribution.PackageDescription.Configuration
+import           Distribution.PackageDescription.Parse (parseGenericPackageDescription)
 import           Distribution.PackageDescription
 import           Distribution.PackageDescription.PrettyPrint (showGenericPackageDescription)
 import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
 import           Distribution.Version
+import           System.Environment
 import           System.Process
 
 -- | Extracts dependencies from the given .cabal file using cabal tool
@@ -32,7 +34,7 @@ extractDependencies cabalFile = do
 -- | Extracts the package names from the output
 extractPackageName :: [String] -> [Dependency]
 extractPackageName [] = []
-extractPackageName (_:"dependent":pkg:rest) = Dependency (PackageName pkg) anyVersion : extractPackageName rest
+extractPackageName (_:"dependent":pkg:rest) = Dependency (mkPackageName pkg) anyVersion : extractPackageName rest
 extractPackageName (_:xs) = extractPackageName xs
 
 -- | Retrieves the latest version of a package from Hackage
@@ -43,7 +45,7 @@ getLatestVersion packageName = do
 
   versionStr <- readProcess "curl" [url] []
   
-  case simpleParse versionStr of
+  case simpleParseVersion versionStr of
     Just version -> return $ Just version
     Nothing -> return Nothing
 
@@ -55,7 +57,7 @@ main = do
   dependencies <- extractDependencies cabalFile
   latestVersions <- mapM getLatestVersion dependencies
 
-  let outdatedDeps = [pkgName | (pkgName, Just latestVer) <- zip dependencies latestVersions, latestVer > packageVersion pkgName]
+  let outdatedDeps = [pkgName | (pkgName, Just latestVer) <- zip dependencies latestVersions, latestVer > pkgVersion pkgName]
   
   if null outdatedDeps
     then putStrLn "All dependencies are up to date."
