@@ -19,8 +19,7 @@ import           Distribution.Types.VersionRange
 import           Distribution.Version
 import           Distribution.Text
 import           Data.List (nub)
-import           Network.HTTP.Simple (httpRequestBS, getResponseBody, setRequestQueryString, parseRequest)
-import           Control.Monad.IO.Class (liftIO)
+import           Network.HTTP.Conduit (simpleHttp)
 import           Control.Monad (forM)
 
 -- | Extracts dependencies from the given .cabal file
@@ -48,10 +47,8 @@ getLatestVersion packageName = do
   let url = "https://hackage.haskell.org/package/" ++ packageNameStr ++ "/preferred"
       packageNameStr = unPackageName packageName
 
-  request <- parseRequest url
-  response <- httpRequestBS $ setRequestQueryString [] request
-  let responseBody = getResponseBody response
-      versionStr = B.unpack responseBody
+  response <- simpleHttp url
+  let versionStr = B.unpack response
 
   case simpleParse versionStr of
     Just version -> return $ Just version
