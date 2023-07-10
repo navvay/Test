@@ -6,42 +6,34 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Haskell script to extract and check dependencies
+# Haskell script to check dependencies
 HASKELL_SCRIPT=$(cat <<'EOT'
 {-# LANGUAGE OverloadedStrings #-}
 
+import           Control.Monad (forM)
 import qualified Data.ByteString.Char8 as B
+import           Data.List (nub)
 import           Distribution.PackageDescription.Parsec
 import           Distribution.PackageDescription.Configuration
-import           Distribution.PackageDescription.Parsec.ParseResult (runParseResult)
-import           Distribution.PackageDescription.Parse (parseGenericPackageDescription)
 import           Distribution.PackageDescription
+import           Distribution.PackageDescription.PrettyPrint (showGenericPackageDescription)
 import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
 import           Distribution.Version
-import           Distribution.Text
-import           Data.List (nub)
 import           System.Process
 
--- | Extracts dependencies from the given .cabal file
+-- | Extracts dependencies from the given .cabal file using cabal tool
 extractDependencies :: FilePath -> IO [Dependency]
 extractDependencies cabalFile = do
-  contents <- B.readFile cabalFile
+  output <- readProcess "cabal" ["v2-build", "--dry-run", "--dependencies", "--enable-tests", "--enable-benchmarks"] cabalFile
+  let dependencies = extractPackageName . words $ output
+  return $ nub dependencies
 
-  let gpdResult = runParseResult $ parseGenericPackageDescription contents
-  case gpdResult of
-    (_, Left err) -> do
-      putStrLn $ "Failed to parse " ++ cabalFile ++ ": " ++ show err
-      exitFailure
-    (_, Right gpd) -> do
-      let flags = []
-          mlib = condLibrary gpd
-          exes = condExecutables gpd
-
-      let combinedDeps = allBuildDepends mlib ++ concatMap (allBuildDepends . snd) exes
-          dependencies = nub $ map (\(Dependency name _) -> name) combinedDeps
-
-      return dependencies
+-- | Extracts the package names from the output
+extractPackageName :: [String] -> [Dependency]
+extractPackageName [] = []
+extractPackageName (_:"dependent":pkg:rest) = Dependency (PackageName pkg) anyVersion : extractPackageName rest
+extractPackageName (_:xs) = extractPackageName xs
 
 -- | Retrieves the latest version of a package from Hackage
 getLatestVersion :: PackageName -> IO (Maybe Version)
