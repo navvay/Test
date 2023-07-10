@@ -15,6 +15,7 @@ import qualified Data.ByteString.Char8 as B
 import           Data.List (nub)
 import           Distribution.Types.PackageName
 import           Distribution.Types.VersionRange
+import           Distribution.Types.Dependency
 import           Distribution.Version
 import           System.Environment
 import           System.Process
