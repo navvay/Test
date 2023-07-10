@@ -59,17 +59,10 @@ getLatestVersion packageName = do
   let pkgIndex = packageIndex repoIndex
   return $ lookupLatestVersion packageName pkgIndex
 
--- | Generates a text file with outdated dependencies
-generateOutdatedDepsFile :: FilePath -> [PackageName] -> IO ()
-generateOutdatedDepsFile outFile outdatedDeps = do
-  let content = unlines $ map (\pkgName -> show pkgName ++ ": <latest version>") outdatedDeps
-  writeFile outFile content
-
 -- | Main function
 main :: IO ()
 main = do
   cabalFile <- head <$> getArgs
-  outdatedDepsFile <- (++ ".outdated") <$> getCurrentDirectory
 
   dependencies <- extractDependencies cabalFile
   latestVersions <- mapM getLatestVersion dependencies
@@ -81,8 +74,7 @@ main = do
     else do
       putStrLn "The following dependencies are outdated:"
       mapM_ (\dep -> putStrLn $ show dep ++ ": <latest version>") outdatedDeps
-      generateOutdatedDepsFile outdatedDepsFile outdatedDeps
-      putStrLn $ "Outdated dependencies written to: " ++ outdatedDepsFile
+      putStrLn "::set-output name=dependencies::$(echo \"$outdatedDeps\" | tr '\n' ',' | sed 's/,$//')"
 EOT
 )
 
@@ -92,7 +84,11 @@ echo "$HASKELL_SCRIPT" > "$TMP_FILE"
 
 # Run the Haskell script with the provided .cabal file as an argument
 cabalFile=$(realpath "$1")
-runhaskell "$TMP_FILE" "$cabalFile"
+output=$(runhaskell "$TMP_FILE" "$cabalFile")
+dependencies=$(echo "$output" | awk '/::set-output name=dependencies::/{print $2}')
+
+# Print the dependencies
+echo "Outdated Dependencies: $dependencies"
 
 # Clean up temporary Haskell file
 rm "$TMP_FILE"
