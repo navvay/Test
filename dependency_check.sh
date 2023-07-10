@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if the input .cabal file is provided
-if [ -z "$1" ]; then
+if [ -z "$1" ]; then 
   echo "Usage: ./dependency_check.sh <CABAL_FILE>"
   exit 1
 fi
